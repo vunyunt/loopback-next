@@ -24,15 +24,6 @@ const g = require('../../lib/globalize');
 const ERROR_INCORRECT_RELATION_TYPE = g.f('Incorrect relation type');
 const ERROR_MODEL_DOES_NOT_EXIST = g.f('model does not exist.');
 const ERROR_NO_MODELS_FOUND = g.f('No models found in');
-const ERROR_SOURCE_MODEL_PRIMARY_KEY_DOES_NOT_EXIST = g.f(
-  'Source model primary key does not exist.',
-);
-const ERROR_DESTINATION_MODEL_PRIMARY_KEY_DOES_NOT_EXIST = g.f(
-  'Target model primary key does not exist.',
-);
-const ERROR_THROUGH_MODEL_PRIMARY_KEY_DOES_NOT_EXIST = g.f(
-  'Through model primary key does not exist.',
-);
 const ERROR_REPOSITORY_DOES_NOT_EXIST = g.f(
   'class does not exist. Please create repository first with "lb4 repository" command.',
 );
@@ -377,10 +368,26 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
       this.artifactInfo.sourceModel,
     );
     if (!this.artifactInfo.sourceModelPrimaryKey) {
-      /* istanbul ignore next */
-      return this.exit(
-        new Error(ERROR_SOURCE_MODEL_PRIMARY_KEY_DOES_NOT_EXIST),
-      );
+      const answer = await this.prompt([
+        {
+          type: 'input',
+          name: 'sourceModelPrimaryKey',
+          message: g.f('What is the name of ID property of the source model?'),
+          when: this.artifactInfo.sourceModelPrimaryKey === undefined,
+          default: 'id',
+        },
+        {
+          type: 'list',
+          name: 'sourceModelPrimaryKeyType',
+          message: g.f('What is the type of the source model primary key?'),
+          choices: ['number', 'string', 'object'],
+          when: this.artifactInfo.sourceModelPrimaryKeyType === undefined,
+          default: 'number',
+        },
+      ]);
+      this.artifactInfo.sourceModelPrimaryKey = answer.sourceModelPrimaryKey;
+      this.artifactInfo.sourceModelPrimaryKeyType =
+        answer.sourceModelPrimaryKeyType;
     } else {
       this.artifactInfo.sourceModelPrimaryKeyType = relationUtils.getModelPropertyType(
         this.artifactInfo.modelDir,
@@ -395,10 +402,27 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
       this.artifactInfo.destinationModel,
     );
     if (!this.artifactInfo.destinationModelPrimaryKey) {
-      /* istanbul ignore next */
-      return this.exit(
-        new Error(ERROR_DESTINATION_MODEL_PRIMARY_KEY_DOES_NOT_EXIST),
-      );
+      const answer = await this.prompt([
+        {
+          type: 'input',
+          name: 'destinationModelPrimaryKey',
+          message: g.f('What is the name of ID property of the target model?'),
+          when: this.artifactInfo.destinationPrimaryKey === undefined,
+          default: 'id',
+        },
+        {
+          type: 'list',
+          name: 'destinationModelPrimaryKeyType',
+          message: g.f('What is the type of the target model primary key?'),
+          choices: ['number', 'string', 'object'],
+          when: this.artifactInfo.destinationPrimaryKeyType === undefined,
+          default: 'number',
+        },
+      ]);
+      this.artifactInfo.destinationModelPrimaryKey =
+        answer.destinationModelPrimaryKey;
+      this.artifactInfo.destinationModelPrimaryKeyType =
+        answer.destinationModelPrimaryKeyType;
     } else {
       this.artifactInfo.destinationModelPrimaryKeyType = relationUtils.getModelPropertyType(
         this.artifactInfo.modelDir,
@@ -408,38 +432,7 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
     }
 
     // for controller usage;
-    this.artifactInfo.targetModelPrimaryKey = await relationUtils.getModelPrimaryKeyProperty(
-      this.fs,
-      this.artifactInfo.modelDir,
-      this.artifactInfo.destinationModel,
-    );
-
-    // checks fks for hasManyThrough
-    if (this.artifactInfo.relationType === 'hasManyThrough') {
-      this.artifactInfo.throughModelPrimaryKey = await relationUtils.getModelPrimaryKeyProperty(
-        this.fs,
-        this.artifactInfo.modelDir,
-        this.artifactInfo.throughModel,
-      );
-      if (this.artifactInfo.throughModelPrimaryKey) {
-        this.artifactInfo.throughModelPrimaryKeyType = relationUtils.getModelPropertyType(
-          this.artifactInfo.modelDir,
-          this.artifactInfo.throughModel,
-          this.artifactInfo.throughModelPrimaryKey,
-        );
-        // type: sourceModelPrimaryKeyType
-        this.artifactInfo.defaultSourceKeyOnThrough =
-          utils.camelCase(this.artifactInfo.sourceModel) + 'Id';
-        this.artifactInfo.defaultTargetKeyOnThrough =
-          utils.camelCase(this.artifactInfo.destinationModel) + 'Id';
-        return this._promptKeyFromOnThroughModel();
-      } else {
-        /* istanbul ignore next */
-        return this.exit(
-          new Error(ERROR_THROUGH_MODEL_PRIMARY_KEY_DOES_NOT_EXIST),
-        );
-      }
-    }
+    // this.artifactInfo.targetModelPrimaryKey = this.artifactInfo.destinationModelPrimaryKey;
 
     if (this.options.foreignKeyName) {
       debug(
