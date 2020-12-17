@@ -80,6 +80,30 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
       description: g.f('Through model'),
     });
 
+    this.option('sourceModelPrimaryKey', {
+      type: String,
+      required: false,
+      description: g.f('Primary key on source model'),
+    });
+
+    this.option('sourceModelPrimaryKeyType', {
+      type: String,
+      required: false,
+      description: g.f('Type of the primary key on source model'),
+    });
+
+    this.option('destinationModelPrimaryKey', {
+      type: String,
+      required: false,
+      description: g.f('Primary key on destination model'),
+    });
+
+    this.option('destinationModelPrimaryKeyType', {
+      type: String,
+      required: false,
+      description: g.f('Type of the primary key on destination model'),
+    });
+
     this.option('sourceKeyOnThrough', {
       type: String,
       required: false,
@@ -362,77 +386,125 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
   async promptForeignKey() {
     if (this.shouldExit()) return false;
 
-    this.artifactInfo.sourceModelPrimaryKey = await relationUtils.getModelPrimaryKeyProperty(
-      this.fs,
-      this.artifactInfo.modelDir,
-      this.artifactInfo.sourceModel,
-    );
+    if (this.options.sourceModelPrimaryKey) {
+      this.artifactInfo.sourceModelPrimaryKey = this.options.sourceModelPrimaryKey;
+    }
+    if (this.options.sourceModelPrimaryKeyType) {
+      this.artifactInfo.sourceModelPrimaryKeyType = this.options.sourceModelPrimaryKeyType;
+    }
+    if (this.options.destinationModelPrimaryKey) {
+      this.artifactInfo.destinationModelPrimaryKey = this.options.destinationModelPrimaryKey;
+    }
+    if (this.options.destinationModelPrimaryKeyType) {
+      this.artifactInfo.destinationModelPrimaryKeyType = this.options.destinationModelPrimaryKeyType;
+    }
+
     if (!this.artifactInfo.sourceModelPrimaryKey) {
-      const answer = await this.prompt([
-        {
-          type: 'input',
-          name: 'sourceModelPrimaryKey',
-          message: g.f('What is the name of ID property of the source model?'),
-          when: this.artifactInfo.sourceModelPrimaryKey === undefined,
-          default: 'id',
-        },
-        {
-          type: 'list',
-          name: 'sourceModelPrimaryKeyType',
-          message: g.f('What is the type of the source model primary key?'),
-          choices: ['number', 'string', 'object'],
-          when: this.artifactInfo.sourceModelPrimaryKeyType === undefined,
-          default: 'number',
-        },
-      ]);
-      this.artifactInfo.sourceModelPrimaryKey = answer.sourceModelPrimaryKey;
-      this.artifactInfo.sourceModelPrimaryKeyType =
-        answer.sourceModelPrimaryKeyType;
-    } else {
-      this.artifactInfo.sourceModelPrimaryKeyType = relationUtils.getModelPropertyType(
+      const sourceModelPK = await relationUtils.getModelPrimaryKeyProperty(
+        this.fs,
         this.artifactInfo.modelDir,
         this.artifactInfo.sourceModel,
-        this.artifactInfo.sourceModelPrimaryKey,
       );
+      if (sourceModelPK) {
+        this.artifactInfo.sourceModelPrimaryKey = sourceModelPK;
+        if (!this.artifactInfo.sourceModelPrimaryKeyType) {
+          const sourceModelPKType = relationUtils.getModelPropertyType(
+            this.artifactInfo.modelDir,
+            this.artifactInfo.sourceModel,
+            this.artifactInfo.sourceModelPrimaryKey,
+          );
+          if (sourceModelPKType) {
+            this.artifactInfo.sourceModelPrimaryKeyType = sourceModelPKType;
+          }
+        }
+      } else {
+        let answer = await this.prompt([
+          {
+            type: 'input',
+            name: 'sourceModelPrimaryKey',
+            message: g.f(
+              'What is the name of ID property of the source model?',
+            ),
+            when: this.artifactInfo.sourceModelPrimaryKey === undefined,
+            default: 'id',
+          },
+        ]);
+        this.artifactInfo.sourceModelPrimaryKey = answer.sourceModelPrimaryKey;
+        if (!this.artifactInfo.sourceModelPrimaryKeyType) {
+          answer = await this.prompt([
+            {
+              type: 'list',
+              name: 'sourceModelPrimaryKeyType',
+              message: g.f('What is the type of the source model primary key?'),
+              choices: ['number', 'string', 'object'],
+              when: this.artifactInfo.sourceModelPrimaryKeyType === undefined,
+              default: 'number',
+            },
+          ]);
+          this.artifactInfo.sourceModelPrimaryKeyType =
+            answer.sourceModelPrimaryKeyType;
+        }
+      }
     }
 
-    this.artifactInfo.destinationModelPrimaryKey = await relationUtils.getModelPrimaryKeyProperty(
-      this.fs,
-      this.artifactInfo.modelDir,
-      this.artifactInfo.destinationModel,
-    );
     if (!this.artifactInfo.destinationModelPrimaryKey) {
-      const answer = await this.prompt([
-        {
-          type: 'input',
-          name: 'destinationModelPrimaryKey',
-          message: g.f('What is the name of ID property of the target model?'),
-          when: this.artifactInfo.destinationPrimaryKey === undefined,
-          default: 'id',
-        },
-        {
-          type: 'list',
-          name: 'destinationModelPrimaryKeyType',
-          message: g.f('What is the type of the target model primary key?'),
-          choices: ['number', 'string', 'object'],
-          when: this.artifactInfo.destinationPrimaryKeyType === undefined,
-          default: 'number',
-        },
-      ]);
-      this.artifactInfo.destinationModelPrimaryKey =
-        answer.destinationModelPrimaryKey;
-      this.artifactInfo.destinationModelPrimaryKeyType =
-        answer.destinationModelPrimaryKeyType;
-    } else {
-      this.artifactInfo.destinationModelPrimaryKeyType = relationUtils.getModelPropertyType(
+      const destModelPK = await relationUtils.getModelPrimaryKeyProperty(
+        this.fs,
         this.artifactInfo.modelDir,
         this.artifactInfo.destinationModel,
-        this.artifactInfo.destinationModelPrimaryKey,
       );
+      if (destModelPK) {
+        this.artifactInfo.destinationModelPrimaryKey = destModelPK;
+        if (!this.artifactInfo.destinationModelPrimaryKey) {
+          const destModelPKType = relationUtils.getModelPropertyType(
+            this.artifactInfo.modelDir,
+            this.artifactInfo.destinationModel,
+            this.artifactInfo.destinationModelPrimaryKey,
+          );
+          if (destModelPKType) {
+            this.artifactInfo.destinationModelPrimaryKey = destModelPKType;
+          }
+        }
+      } else {
+        let answer = await this.prompt([
+          {
+            type: 'input',
+            name: 'destinationModelPrimaryKey',
+            message: g.f(
+              'What is the name of ID property of the target model?',
+            ),
+            when: this.artifactInfo.destinationModelPrimaryKey === undefined,
+            default: 'id',
+          },
+        ]);
+        this.artifactInfo.destinationModelPrimaryKey =
+          answer.destinationModelPrimaryKey;
+        if (!this.artifactInfo.destinationModelPrimaryKeyType) {
+          answer = await this.prompt([
+            {
+              type: 'list',
+              name: 'destinationModelPrimaryKeyType',
+              message: g.f('What is the type of the target model primary key?'),
+              choices: ['number', 'string', 'object'],
+              when:
+                this.artifactInfo.destinationModelPrimaryKeyType === undefined,
+              default: 'number',
+            },
+          ]);
+          this.artifactInfo.destinationModelPrimaryKeyType =
+            answer.destinationModelPrimaryKeyType;
+        }
+      }
     }
 
-    // for controller usage;
-    // this.artifactInfo.targetModelPrimaryKey = this.artifactInfo.destinationModelPrimaryKey;
+    // checks fks for hasManyThrough
+    if (this.artifactInfo.relationType === 'hasManyThrough') {
+      this.artifactInfo.defaultSourceKeyOnThrough =
+        utils.camelCase(this.artifactInfo.sourceModel) + 'Id';
+      this.artifactInfo.defaultTargetKeyOnThrough =
+        utils.camelCase(this.artifactInfo.destinationModel) + 'Id';
+      return this._promptKeyFromOnThroughModel();
+    }
 
     if (this.options.foreignKeyName) {
       debug(
