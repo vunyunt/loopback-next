@@ -418,7 +418,7 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
           }
         }
       } else {
-        let answer = await this.prompt([
+        const answer = await this.prompt([
           {
             type: 'input',
             name: 'sourceModelPrimaryKey',
@@ -430,20 +430,20 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
           },
         ]);
         this.artifactInfo.sourceModelPrimaryKey = answer.sourceModelPrimaryKey;
-        if (!this.artifactInfo.sourceModelPrimaryKeyType) {
-          answer = await this.prompt([
-            {
-              type: 'list',
-              name: 'sourceModelPrimaryKeyType',
-              message: g.f('What is the type of the source model primary key?'),
-              choices: ['number', 'string', 'object'],
-              when: this.artifactInfo.sourceModelPrimaryKeyType === undefined,
-              default: 'number',
-            },
-          ]);
-          this.artifactInfo.sourceModelPrimaryKeyType =
-            answer.sourceModelPrimaryKeyType;
-        }
+      }
+      if (!this.artifactInfo.sourceModelPrimaryKeyType) {
+        const answer = await this.prompt([
+          {
+            type: 'list',
+            name: 'sourceModelPrimaryKeyType',
+            message: g.f('What is the type of the source model primary key?'),
+            choices: ['number', 'string', 'object'],
+            when: this.artifactInfo.sourceModelPrimaryKeyType === undefined,
+            default: 'number',
+          },
+        ]);
+        this.artifactInfo.sourceModelPrimaryKeyType =
+          answer.sourceModelPrimaryKeyType;
       }
     }
 
@@ -466,7 +466,7 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
           }
         }
       } else {
-        let answer = await this.prompt([
+        const answer = await this.prompt([
           {
             type: 'input',
             name: 'destinationModelPrimaryKey',
@@ -479,21 +479,21 @@ module.exports = class RelationGenerator extends ArtifactGenerator {
         ]);
         this.artifactInfo.destinationModelPrimaryKey =
           answer.destinationModelPrimaryKey;
-        if (!this.artifactInfo.destinationModelPrimaryKeyType) {
-          answer = await this.prompt([
-            {
-              type: 'list',
-              name: 'destinationModelPrimaryKeyType',
-              message: g.f('What is the type of the target model primary key?'),
-              choices: ['number', 'string', 'object'],
-              when:
-                this.artifactInfo.destinationModelPrimaryKeyType === undefined,
-              default: 'number',
-            },
-          ]);
-          this.artifactInfo.destinationModelPrimaryKeyType =
-            answer.destinationModelPrimaryKeyType;
-        }
+      }
+      if (!this.artifactInfo.destinationModelPrimaryKeyType) {
+        const answer = await this.prompt([
+          {
+            type: 'list',
+            name: 'destinationModelPrimaryKeyType',
+            message: g.f('What is the type of the target model primary key?'),
+            choices: ['number', 'string', 'object'],
+            when:
+              this.artifactInfo.destinationModelPrimaryKeyType === undefined,
+            default: 'number',
+          },
+        ]);
+        this.artifactInfo.destinationModelPrimaryKeyType =
+          answer.destinationModelPrimaryKeyType;
       }
     }
 
