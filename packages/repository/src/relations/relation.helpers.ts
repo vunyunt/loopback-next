@@ -58,7 +58,7 @@ export async function findByForeignKeys<
 
   if (scope && !_.isEmpty(scope)) {
     // combine where clause to scope filter
-    scope = new FilterBuilder(scope).impose({where}).filter;
+    scope = new FilterBuilder(_.cloneDeep(scope)).impose({where}).filter;
   } else {
     scope = {where} as Filter<Target>;
   }
